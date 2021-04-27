@@ -42,6 +42,8 @@ def welcome():
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/'<'start'>'<br/>"
         f"/api/v1.0/'<'start'>'/'<'end'>'<br/>"
+        f"Example: http://127.0.0.1:5000/api/v1.0/'2010-01-01'<br/>"
+        f"Example: http://127.0.0.1:5000/api/v1.0/'2010-01-01'/'2017-04-01'<br/>"
     )
   
 @app.route("/api/v1.0/precipitation")
@@ -98,7 +100,6 @@ def start_(start):
     jsonfiles = json.loads(dfres.to_json(orient='records'))
     
     session.close()
-    
     return jsonify(jsonfiles)  
 
 @app.route("/api/v1.0/<start>/<end>")
@@ -116,10 +117,7 @@ def start_end(start,end):
     jsonfiles = json.loads(dfres.to_json(orient='records'))
     
     session.close()
-    
     return jsonify(jsonfiles)
-    
-    return jsonify(hello_dict)
 
 if __name__ == "__main__":
     app.run(debug=True)
