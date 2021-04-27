@@ -106,11 +106,11 @@ def start_end(start,end):
     session = Session(engine)
     
     date = start
-    results_min = session.query(Measurement.station, Measurement.date,func.min(Measurement.tobs).label("TMIN")).filter(Measurement.date <= end).filter(Measurement.date >= date)
+    results_min = session.query(Measurement.station, Measurement.date,func.min(Measurement.tobs).label("TMIN")).filter(Measurement.date >= date).filter(Measurement.date <= end)
     dfres_min = pd.read_sql(results_min.statement, results_min.session.bind)
-    results_avg = session.query(Measurement.station, Measurement.date,func.avg(Measurement.tobs).label("TAVG")).filter(Measurement.date <= end).filter(Measurement.date >= date)
+    results_avg = session.query(Measurement.station, Measurement.date,func.avg(Measurement.tobs).label("TAVG")).filter(Measurement.date >= date).filter(Measurement.date <= end)
     dfres_avg = pd.read_sql(results_avg.statement, results_avg.session.bind)
-    results_max = session.query(Measurement.station, Measurement.date,func.max(Measurement.tobs).label("TMAX")).filter(Measurement.date <= end).filter(Measurement.date >= date)
+    results_max = session.query(Measurement.station, Measurement.date,func.max(Measurement.tobs).label("TMAX")).filter(Measurement.date >= date).filter(Measurement.date <= end)
     dfres_max = pd.read_sql(results_max.statement, results_max.session.bind)
     dfres = pd.concat([dfres_min, dfres_avg, dfres_max])
     jsonfiles = json.loads(dfres.to_json(orient='records'))
