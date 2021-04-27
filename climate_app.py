@@ -1,3 +1,8 @@
+##############################################################################
+##
+## Dan C. Climate App - Utilizing Python, Pandas, Flask, SQLAlchemy and SQLite
+##
+##############################################################################
 from flask import Flask, jsonify, json
 from flask_sqlalchemy import SQLAlchemy
 import numpy as np
@@ -28,6 +33,7 @@ hello_dict = {"Hello": "World!"}
 
 @app.route("/")
 def welcome():
+    # List all the available routes
     return (
         f"Welcome to Dan C's Climate App!<br/>"
         f"Available Routes:<br/>"
@@ -38,35 +44,66 @@ def welcome():
         f"/api/v1.0/'<'start'>'/'<'end'>'<br/>"
     )
   
-@app.route("/precipitation")
+@app.route("/api/v1.0/precipitation")
 def precipitation():   
+    # Open a new db session for each request
+    session = Session(engine)  
+    
     query = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     date = dt.datetime.strptime(query.date, "%Y-%m-%d") - dt.timedelta(days=365)
     results = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date > date)
     dfres = pd.read_sql(results.statement, results.session.bind)   
     jsonfiles = json.loads(dfres.to_json(orient='records'))
+    
+    # Flask threads are sensitive to db connections, no sharing apparently
+    session.close()
     return jsonify(jsonfiles)
 
-@app.route("/stations")
+@app.route("/api/v1.0/stations")
 def stations():
+    session = Session(engine)
+    
     results = session.query(Station)
     dfres = pd.read_sql(results.statement, results.session.bind)   
     jsonfiles = json.loads(dfres.to_json(orient='records'))
+    
+    session.close()
     return jsonify(jsonfiles)  
 
-@app.route("/tobs")
+@app.route("/api/v1.0/tobs")
 def tobs():
+    session = Session(engine)
+    
     query = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     date = dt.datetime.strptime(query.date, "%Y-%m-%d") - dt.timedelta(days=365)
     results = session.query(Measurement.date,Measurement.tobs).filter(Measurement.date > date).filter(Measurement.station == 'USC00519281') 
     dfres = pd.read_sql(results.statement, results.session.bind)  
     jsonfiles = json.loads(dfres.to_json(orient='records'))
+    
+    session.close()
     return jsonify(jsonfiles)  
 
-@app.route("/jsonified")
-def jsonified():
-    return jsonify(hello_dict)
+@app.route("/api/v1.0/<start>")
+def start_(start):
+    #canonicalized = start #.replace(" ", "").lower()
+    
+    session = Session(engine)
+    
+    #query = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    date = start
+    results = session.query(Measurement.date,Measurement.tobs).filter(Measurement.date > date).filter(Measurement.station == 'USC00519281') 
+    dfres = pd.read_sql(results.statement, results.session.bind)  
+    jsonfiles = json.loads(dfres.to_json(orient='records'))
+    
+    session.close()
+    
+    return jsonify(jsonfiles)  
 
+@app.route("/api/v1.0/<start>/<end>")
+def start_end(start_date,end_date):
+    
+    
+    return jsonify(hello_dict)
 
 if __name__ == "__main__":
     app.run(debug=True)
