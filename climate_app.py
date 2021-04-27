@@ -84,15 +84,17 @@ def tobs():
     return jsonify(jsonfiles)  
 
 @app.route("/api/v1.0/<start>")
-def start_(start):
-    #canonicalized = start #.replace(" ", "").lower()
-    
+def start_(start):    
     session = Session(engine)
     
-    #query = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
     date = start
-    results = session.query(Measurement.date,Measurement.tobs).filter(Measurement.date > date).filter(Measurement.station == 'USC00519281') 
-    dfres = pd.read_sql(results.statement, results.session.bind)  
+    results_min = session.query(Measurement.station, Measurement.date,func.min(Measurement.tobs).label("TMIN")).filter(Measurement.date > date)
+    dfres_min = pd.read_sql(results_min.statement, results_min.session.bind)
+    results_avg = session.query(Measurement.station, Measurement.date,func.avg(Measurement.tobs).label("TAVG")).filter(Measurement.date > date)
+    dfres_avg = pd.read_sql(results_avg.statement, results_avg.session.bind)
+    results_max = session.query(Measurement.station, Measurement.date,func.max(Measurement.tobs).label("TMAX")).filter(Measurement.date > date)
+    dfres_max = pd.read_sql(results_max.statement, results_max.session.bind)
+    dfres = pd.concat([dfres_min, dfres_avg, dfres_max])
     jsonfiles = json.loads(dfres.to_json(orient='records'))
     
     session.close()
